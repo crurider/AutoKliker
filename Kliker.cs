@@ -15,8 +15,8 @@ namespace AutoKliker
         private DataTable dtPositions;
         private DataRow dataRow;
         private Random random;
-        private uint klikX;
-        private uint klikY;
+        private int klikX;
+        private int klikY;
         private int r;
         private int counter;
         private int cnt;
@@ -26,7 +26,7 @@ namespace AutoKliker
         public CancellationToken token;
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
-        public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint cButtons, uint dwExtraInfo);
+        public static extern void mouse_event(int dwFlags, int dx, int dy, int cButtons, int dwExtraInfo);
         private const int MOUSEEVENTF_LEFTDOWN = 0x02;
         private const int MOUSEEVENTF_LEFTUP = 0x04;
         private const int MOUSEEVENTF_RIGHTDOWN = 0x08;
@@ -166,14 +166,15 @@ namespace AutoKliker
 
         // Pomeri kursor na odredjenu poziciju i klikni izabrani klik
         // Spava dok ne dodje random vreme za klik
-        private async Task moveCursorAndClick(uint x, uint y, CancellationToken token)
+        private async Task moveCursorAndClick(int x, int y, CancellationToken token)
         {
             tokenSource = new CancellationTokenSource();
             token = tokenSource.Token;
 
             await Task.Run(() =>
             {
-                Cursor.Position = new Point((int)x, (int)y);
+                Cursor.Position = new Point(x, y);
+                System.Threading.Thread.Sleep(r);
 
                 if (clickType.Equals("R"))
                 {
@@ -183,9 +184,6 @@ namespace AutoKliker
                 {
                     mouse_event(MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP, x, y, 0, 0);
                 }
-
-                System.Threading.Thread.Sleep(r);
-
             }, token);
         }
 
@@ -211,8 +209,8 @@ namespace AutoKliker
                     r = randomTime(Int32.Parse(dtPositions.Rows[j]["OD"].ToString()), Int32.Parse(dtPositions.Rows[j]["DO"].ToString()));
                     Console.WriteLine("Time: " + r);
                     Console.WriteLine("Count: " + cnt);
-                    klikX = uint.Parse(dtPositions.Rows[j]["X"].ToString());
-                    klikY = uint.Parse(dtPositions.Rows[j]["Y"].ToString());
+                    klikX = Int32.Parse(dtPositions.Rows[j]["X"].ToString());
+                    klikY = Int32.Parse(dtPositions.Rows[j]["Y"].ToString());
                     clickType = dtPositions.Rows[j]["TIP"].ToString();
                     await moveCursorAndClick(klikX, klikY, token);
                     cnt--;
