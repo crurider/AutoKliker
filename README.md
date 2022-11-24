@@ -1,3 +1,4 @@
 ## TODO List
 
-- Most important: alarm kada nadje tekmu, mozda i sms/alert?
+- Prikazati info da li je utakmica pronadjena (ScreenCapture and OCR)
+- Proslediti info (nekakav alert na phone)
