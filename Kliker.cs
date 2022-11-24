@@ -22,7 +22,8 @@ namespace AutoKliker
         private int cnt;
         private string clickType;
         private int rowIndex;
-        public CancellationTokenSource source; 
+        public CancellationTokenSource tokenSource;
+        public CancellationToken token;
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
         public static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint cButtons, uint dwExtraInfo);
@@ -123,95 +124,6 @@ namespace AutoKliker
             clearFields();
         }
 
-        // Refresh polja
-        private void clearFields()
-        {
-            txtPozicijaX.Text = "";
-            txtPozicijaY.Text = "";
-            txtDelayFrom.Text = "";
-            txtDelayTo.Text = "";
-        }
-
-        // Pomeri kursor na odredjenu poziciju i klikni izabrani klik
-        // Spava dok ne dodje random vreme za klik
-        private Task moveCursorAndClick(uint x, uint y)
-        {
-            source = new CancellationTokenSource();
-            CancellationToken token = source.Token;
-
-            return Task.Factory.StartNew(() =>
-            {
-                System.Threading.Thread.Sleep(r);
-                this.Invoke((Action)delegate
-                {
-                    this.Cursor = new Cursor(Cursor.Current.Handle);
-                });
-
-                if (token.IsCancellationRequested)
-                {
-                    System.Windows.Forms.MessageBox.Show("Kliktanje stopirano!", "Obaveštenje");
-                    return;
-                }
-
-                Cursor.Position = new Point((int)x, (int)y);
-                if (clickType.Equals("R"))
-                {
-                    mouse_event(MOUSEEVENTF_RIGHTDOWN | MOUSEEVENTF_RIGHTUP, x, y, 0, 0);
-                }
-                else
-                {
-                    mouse_event(MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP, x, y, 0, 0);
-                }
-            }, token);
-        }
-
-        // Random vreme u opsegu
-        private int randomTime(int min, int max)
-        {
-            random = new Random();
-            return random.Next(min, max);
-        }
-        
-        // Pokreni kliktanje
-        private async void btnStart_Click(object sender, EventArgs e)
-        {
-            btnStart.Enabled = false;
-            try
-            {
-                counter = Int32.Parse(txtBrojPonavljanja.Text);
-            }
-            catch (Exception)
-            {
-                System.Windows.Forms.MessageBox.Show("Broj ponavljanja mora biti broj!", "Greška kod unosa broja ponavljanja");
-            }
-            this.WindowState = FormWindowState.Minimized;
-            for (cnt = counter; cnt > 0;)
-            {
-                for (int j = 0; j < dtPositions.Rows.Count; j++)
-                {     
-                    r = randomTime(Int32.Parse(dtPositions.Rows[j]["OD"].ToString()), Int32.Parse(dtPositions.Rows[j]["DO"].ToString()));
-                    Console.WriteLine("Time: " + r);
-                    Console.WriteLine("Count: " + cnt);
-                    klikX = uint.Parse(dtPositions.Rows[j]["X"].ToString());
-                    klikY = uint.Parse(dtPositions.Rows[j]["Y"].ToString());
-                    clickType = dtPositions.Rows[j]["TIP"].ToString();
-                    await moveCursorAndClick(klikX, klikY);
-                    cnt--;
-                }
-            }
-            btnStop_Click(sender, e);
-        }
-
-        // stop clicking
-        private void btnStop_Click(object sender, EventArgs e)
-        {
-            cnt = 0;
-            source?.Cancel();
-            btnStart.Enabled = true;
-            this.WindowState = FormWindowState.Normal;
-            Cursor.Current = Cursors.Default;
-        }
-
         // prikazi meni kada se klikne desni klik na red
         private void dataGrid_CellMouseDown(object sender, DataGridViewCellMouseEventArgs e)
         {
@@ -234,6 +146,92 @@ namespace AutoKliker
             {
                 this.dataGrid.Rows.RemoveAt(rowIndex);
             }
+        }
+
+        // Refresh polja
+        private void clearFields()
+        {
+            txtPozicijaX.Text = "";
+            txtPozicijaY.Text = "";
+            txtDelayFrom.Text = "";
+            txtDelayTo.Text = "";
+        }
+
+        // Random vreme u opsegu
+        private int randomTime(int min, int max)
+        {
+            random = new Random();
+            return random.Next(min, max);
+        }
+
+        // Pomeri kursor na odredjenu poziciju i klikni izabrani klik
+        // Spava dok ne dodje random vreme za klik
+        private async Task moveCursorAndClick(uint x, uint y, CancellationToken token)
+        {
+            tokenSource = new CancellationTokenSource();
+            token = tokenSource.Token;
+
+            await Task.Run(() =>
+            {
+                Cursor.Position = new Point((int)x, (int)y);
+
+                if (clickType.Equals("R"))
+                {
+                   mouse_event(MOUSEEVENTF_RIGHTDOWN | MOUSEEVENTF_RIGHTUP, x, y, 0, 0);
+                }
+                else
+                {
+                    mouse_event(MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP, x, y, 0, 0);
+                }
+
+                System.Threading.Thread.Sleep(r);
+
+            }, token);
+        }
+
+        // Pokreni kliktanje
+        private async void btnStart_Click(object sender, EventArgs e)
+        {
+            tokenSource = new CancellationTokenSource();
+            btnStart.Enabled = false;
+
+            try
+            {
+                counter = Int32.Parse(txtBrojPonavljanja.Text);
+            }
+            catch (Exception)
+            {
+                System.Windows.MessageBox.Show("Broj ponavljanja mora biti broj!", "Greška kod unosa broja ponavljanja");
+            }
+
+            for (cnt = counter; cnt > 0;)
+            {
+                for (int j = 0; j < dtPositions.Rows.Count; j++)
+                {     
+                    r = randomTime(Int32.Parse(dtPositions.Rows[j]["OD"].ToString()), Int32.Parse(dtPositions.Rows[j]["DO"].ToString()));
+                    Console.WriteLine("Time: " + r);
+                    Console.WriteLine("Count: " + cnt);
+                    klikX = uint.Parse(dtPositions.Rows[j]["X"].ToString());
+                    klikY = uint.Parse(dtPositions.Rows[j]["Y"].ToString());
+                    clickType = dtPositions.Rows[j]["TIP"].ToString();
+                    await moveCursorAndClick(klikX, klikY, token);
+                    cnt--;
+                }
+                if (token.IsCancellationRequested)
+                {
+                    throw new TaskCanceledException();
+                }
+            }
+            btnStop_Click(sender, e);
+        }
+
+        // stop clicking
+        private void btnStop_Click(object sender, EventArgs e)
+        {
+            cnt = 0;
+            tokenSource?.Cancel();
+            btnStart.Enabled = true;
+            Cursor.Current = Cursors.Arrow;
         }
     }
 }
