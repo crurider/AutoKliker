@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
+using IronOcr;
 
 namespace AutoKliker
 {
@@ -24,8 +26,12 @@ namespace AutoKliker
         private int rowIndex;
         private int startPositionX;
         private int startPositionY;
+        private double maxWidth;
+        private double maxHeight;
         public CancellationTokenSource tokenSource;
         public CancellationToken token;
+        private static string user = Environment.UserName;
+        private string imagePath = $"C:\\Users\\{user}\\AppData\\Local\\capture.jpg";
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
         public static extern void mouse_event(int dwFlags, int dx, int dy, int cButtons, int dwExtraInfo);
@@ -50,8 +56,8 @@ namespace AutoKliker
 
         // Prikaz providnog panela za odabir pozicije
         private void showPanel() {
-            double maxWidth = SystemParameters.VirtualScreenWidth;
-            double maxHeight = SystemParameters.VirtualScreenHeight;
+            maxWidth = SystemParameters.VirtualScreenWidth;
+            maxHeight = SystemParameters.VirtualScreenHeight;
 
             backgroundPanel = new BackPane();
             backgroundPanel.Text = "Izaberite poziciju";
@@ -63,16 +69,6 @@ namespace AutoKliker
 
             backgroundPanel.ShowDialog();
             this.WindowState = FormWindowState.Normal;
-        }
-
-        // Dodavanje u listu
-        private void btnDodaj_Click(object sender, EventArgs e) {
-            if (dtPositions == null) {
-                dtPositions = new DataTable();
-                createTable(dtPositions);
-            }
-            dataRow = dtPositions.NewRow();
-            addRowWithData(dataRow, dtPositions);
         }
 
         // Kreiranje skeleta tabele
@@ -89,7 +85,17 @@ namespace AutoKliker
             kolonaTip.ReadOnly = true;
         }
 
-        // Popuni red
+        // Dodavanje u listu
+        private void btnDodaj_Click(object sender, EventArgs e) {
+            if (dtPositions == null) {
+                dtPositions = new DataTable();
+                createTable(dtPositions);
+            }
+            dataRow = dtPositions.NewRow();
+            addRowWithData(dataRow, dtPositions);
+        }
+
+        // Dodavanje reda u tabelu
         private void addRowWithData(DataRow dr, DataTable dt) {
             dr["X"] = txtPozicijaX.Text;
             dr["Y"] = txtPozicijaY.Text;
@@ -114,7 +120,7 @@ namespace AutoKliker
             clearFields();
         }
 
-        // prikazi meni kada se klikne desni klik na red
+        // Prikazi meni kada se klikne desni klik na red
         private void dataGrid_CellMouseDown(object sender, DataGridViewCellMouseEventArgs e) {
             if (e.Button == MouseButtons.Right) {
                 rowIndex = e.RowIndex;
@@ -126,7 +132,7 @@ namespace AutoKliker
             }
         }
 
-        // brisanje reda iz liste
+        // Brisanje reda iz liste
         private void opcijeDesnogKlika_Click(object sender, EventArgs e) {
             if (!this.dataGrid.Rows[rowIndex].IsNewRow) {
                 this.dataGrid.Rows.RemoveAt(rowIndex);
@@ -210,12 +216,38 @@ namespace AutoKliker
             btnStop_Click(sender, e);
         }
 
-        // stop clicking
+        // Zaustavi kliktanje
         private void btnStop_Click(object sender, EventArgs e) {
             cnt = 0;
             tokenSource?.Cancel();
             btnStart.Enabled = true;
             Cursor.Current = Cursors.Arrow;
+        }
+
+        // Screenshot celog ekrana
+        private void captureScreen() {
+            Bitmap captureBitmap = new Bitmap((int)maxWidth, (int)maxHeight, PixelFormat.Format32bppArgb);
+            Rectangle captureRectangle = new Rectangle(leftBoundValue(), 0, (int)maxWidth, (int)maxHeight); 
+            Graphics captureGraphics = Graphics.FromImage(captureBitmap);
+            captureGraphics.CopyFromScreen(captureRectangle.Left, captureRectangle.Top, 0, 0, captureRectangle.Size);
+            captureBitmap.Save(imagePath, ImageFormat.Jpeg);
+        }
+
+        // Proveri koliko ima ekrana
+        private int checkNumberOfScreens() {
+            int count = 0;
+            foreach (var screen in Screen.AllScreens) {
+                count++;
+            }
+            return count;
+        }
+
+        // Leva granica ekrana za screenshot
+        private int leftBoundValue() {
+            if (checkNumberOfScreens() > 1) {
+                return -(int)maxWidth / 2;
+            }
+            return -(int)maxWidth;
         }
     }
 }
