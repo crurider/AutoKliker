@@ -7,7 +7,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
-using IronOcr;
 
 namespace AutoKliker
 {
@@ -180,6 +179,8 @@ namespace AutoKliker
                 if (pocetnaPozicija.Checked) {
                     Cursor.Position = new Point(startPositionX, startPositionY);
                 }
+
+                getScreenshotAndSave();
                 
                 Thread.Sleep(r);
 
@@ -224,30 +225,11 @@ namespace AutoKliker
             Cursor.Current = Cursors.Arrow;
         }
 
-        // Screenshot celog ekrana
-        private void captureScreen() {
-            Bitmap captureBitmap = new Bitmap((int)maxWidth, (int)maxHeight, PixelFormat.Format32bppArgb);
-            Rectangle captureRectangle = new Rectangle(leftBoundValue(), 0, (int)maxWidth, (int)maxHeight); 
-            Graphics captureGraphics = Graphics.FromImage(captureBitmap);
-            captureGraphics.CopyFromScreen(captureRectangle.Left, captureRectangle.Top, 0, 0, captureRectangle.Size);
-            captureBitmap.Save(imagePath, ImageFormat.Jpeg);
-        }
-
-        // Proveri koliko ima ekrana
-        private int checkNumberOfScreens() {
-            int count = 0;
-            foreach (var screen in Screen.AllScreens) {
-                count++;
-            }
-            return count;
-        }
-
-        // Leva granica ekrana za screenshot
-        private int leftBoundValue() {
-            if (checkNumberOfScreens() > 1) {
-                return -(int)maxWidth / 2;
-            }
-            return -(int)maxWidth;
+        // Screenshot i cuvanje aktivnog prozora
+        private void getScreenshotAndSave() {
+            var image = ScreenCapture.CaptureActiveWindow();
+            image.Save(imagePath, ImageFormat.Jpeg);
+            image.Dispose();
         }
     }
 }
