@@ -1,4 +1,10 @@
-## TODO List
+# Advanced mouse clicking tool
 
-- Prikazati info da li je utakmica pronadjena (ScreenCapture and OCR)
-- Proslediti info (nekakav alert na phone)
+## All best features combined in one tool.
+- Clicking on multiple locations
+- Left or right click
+- Custom time range
+- Revert cursor to position before click
+
+## Quick start
+> Just build project and run **.exe**
