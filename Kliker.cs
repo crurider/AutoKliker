@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Data;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
+using Tesseract;
 
 namespace AutoKliker
 {
@@ -31,6 +31,7 @@ namespace AutoKliker
         public CancellationToken token;
         private static string user = Environment.UserName;
         private string imagePath = $"C:\\Users\\{user}\\AppData\\Local\\capture.jpg";
+        private string tessdataPath = "C:\\Program Files\\Tesseract-OCR\\tessdata";
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
         public static extern void mouse_event(int dwFlags, int dx, int dy, int cButtons, int dwExtraInfo);
@@ -180,8 +181,19 @@ namespace AutoKliker
                     Cursor.Position = new Point(startPositionX, startPositionY);
                 }
 
+                // slikaj prozor
                 getScreenshotAndSave();
-                
+
+                // uzmi text
+                string dashboardContent = getTextFromActiveWindow(imagePath);
+
+                // proveri da li postoji tekma
+                if (dashboardContent.ToLower().Contains("tickets")) {
+                    System.Windows.MessageBox.Show("BINGO");
+
+                    // ovde ide stop i send alert
+                }
+
                 Thread.Sleep(r);
 
             }, token);
@@ -228,8 +240,16 @@ namespace AutoKliker
         // Screenshot i cuvanje aktivnog prozora
         private void getScreenshotAndSave() {
             var image = ScreenCapture.CaptureActiveWindow();
-            image.Save(imagePath, ImageFormat.Jpeg);
-            image.Dispose();
+            image.Save(imagePath, System.Drawing.Imaging.ImageFormat.Jpeg);
+        }
+
+        // OCR
+        private string getTextFromActiveWindow(string imagePath) {
+            var ocr = new TesseractEngine(tessdataPath, "eng", EngineMode.Default);
+            var imgToScan = Pix.LoadFromFile(imagePath);
+            var page = ocr.Process(imgToScan);
+            var text = page.GetText();
+            return text;
         }
     }
 }
