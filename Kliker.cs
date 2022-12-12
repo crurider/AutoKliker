@@ -7,6 +7,10 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
 using Tesseract;
+using Microsoft.Extensions.Configuration;
+using System.Net;
+using System.Net.Mail;
+using System.IO;
 
 namespace AutoKliker
 {
@@ -32,6 +36,10 @@ namespace AutoKliker
         private static string user = Environment.UserName;
         private string imagePath = $"C:\\Users\\{user}\\AppData\\Local\\capture.jpg";
         private string tessdataPath = "C:\\Program Files\\Tesseract-OCR\\tessdata";
+        private string host;
+        private int port;
+        private string username;
+        private string password;
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
         public static extern void mouse_event(int dwFlags, int dx, int dy, int cButtons, int dwExtraInfo);
@@ -188,10 +196,11 @@ namespace AutoKliker
                 string dashboardContent = getTextFromActiveWindow(imagePath);
 
                 // proveri da li postoji tekma
-                if (dashboardContent.ToLower().Contains("tickets")) {
-                    System.Windows.MessageBox.Show("BINGO");
-
-                    // ovde ide stop i send alert
+                // ako postoji stopiraj kliker i posalji notifikaciju
+                if (dashboardContent.ToLower().Contains(txtSearchFor.Text)) {
+                    tokenSource?.Cancel();
+                    var config = getEmailParams();
+                    sendMail(config);
                 }
 
                 Thread.Sleep(r);
@@ -241,6 +250,7 @@ namespace AutoKliker
         private void getScreenshotAndSave() {
             var image = ScreenCapture.CaptureActiveWindow();
             image.Save(imagePath, System.Drawing.Imaging.ImageFormat.Jpeg);
+            image.Dispose();
         }
 
         // OCR
@@ -250,6 +260,44 @@ namespace AutoKliker
             var page = ocr.Process(imgToScan);
             var text = page.GetText();
             return text;
+        }
+
+        // Importovanje parametara za mail
+        private IConfigurationRoot getEmailParams() {
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), @"..\.."))
+                .AddJsonFile("config\\emailConfig.json");
+            return builder.Build();
+        }
+
+        // Slanje notifikacije preko mejla
+        private void sendMail(IConfigurationRoot config) {
+            host = config["SMTP:host"];
+            port = Convert.ToInt32(config["SMTP:port"]);
+            username = config["SMTP:username"];
+            password = config["SMTP:password"];
+            string sendTo = txtSendTo.Text;
+            string subject = "The game is found in dashboard!";
+            string body = "The game is found! Please start working immediately!";
+
+            try {
+                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+                var client = new SmtpClient(host, port);
+                client.Credentials = new NetworkCredential(username, password);
+                client.EnableSsl = true;
+                client.Send(username, sendTo, subject, body);
+            }
+            catch (Exception){
+                System.Windows.MessageBox.Show("Greška kod slanja maila.");
+            }
+        }
+
+        // clear placeholder text when click
+        private void txtSearchFor_Click(object sender, EventArgs e) {
+            txtSearchFor.Text = "";
+        }
+        private void txtSendTo_Click(object sender, EventArgs e) {
+            txtSendTo.Text = "";
         }
     }
 }

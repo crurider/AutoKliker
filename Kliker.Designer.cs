@@ -52,10 +52,17 @@
             this.btnIzaberi = new System.Windows.Forms.Button();
             this.opcijeDesnogKlika = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.izbrišiPozicijuToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.txtSendTo = new System.Windows.Forms.TextBox();
+            this.label8 = new System.Windows.Forms.Label();
+            this.txtSearchFor = new System.Windows.Forms.TextBox();
+            this.label7 = new System.Windows.Forms.Label();
+            this.obavestenje = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGrid)).BeginInit();
             this.opcijeDesnogKlika.SuspendLayout();
+            this.groupBox3.SuspendLayout();
             this.SuspendLayout();
             // 
             // groupBox1
@@ -278,22 +285,89 @@
             this.izbrišiPozicijuToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
             this.izbrišiPozicijuToolStripMenuItem.Text = "Izbriši poziciju";
             // 
+            // groupBox3
+            // 
+            this.groupBox3.Controls.Add(this.txtSendTo);
+            this.groupBox3.Controls.Add(this.label8);
+            this.groupBox3.Controls.Add(this.txtSearchFor);
+            this.groupBox3.Controls.Add(this.label7);
+            this.groupBox3.Controls.Add(this.obavestenje);
+            this.groupBox3.Location = new System.Drawing.Point(13, 197);
+            this.groupBox3.Name = "groupBox3";
+            this.groupBox3.Size = new System.Drawing.Size(550, 64);
+            this.groupBox3.TabIndex = 2;
+            this.groupBox3.TabStop = false;
+            this.groupBox3.Text = "Notifikacija";
+            // 
+            // txtSendTo
+            // 
+            this.txtSendTo.ForeColor = System.Drawing.SystemColors.ControlDark;
+            this.txtSendTo.Location = new System.Drawing.Point(146, 35);
+            this.txtSendTo.Name = "txtSendTo";
+            this.txtSendTo.Size = new System.Drawing.Size(129, 20);
+            this.txtSendTo.TabIndex = 13;
+            this.txtSendTo.Text = "mitar@miric.com";
+            this.txtSendTo.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.txtSendTo.Click += new System.EventHandler(this.txtSendTo_Click);
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Location = new System.Drawing.Point(143, 19);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(55, 13);
+            this.label8.TabIndex = 12;
+            this.label8.Text = "Pošalji na:";
+            // 
+            // txtSearchFor
+            // 
+            this.txtSearchFor.ForeColor = System.Drawing.SystemColors.ControlDark;
+            this.txtSearchFor.Location = new System.Drawing.Point(10, 35);
+            this.txtSearchFor.Name = "txtSearchFor";
+            this.txtSearchFor.Size = new System.Drawing.Size(122, 20);
+            this.txtSearchFor.TabIndex = 11;
+            this.txtSearchFor.Text = "default: \"tickets\"";
+            this.txtSearchFor.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.txtSearchFor.Click += new System.EventHandler(this.txtSearchFor_Click);
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(7, 19);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(106, 13);
+            this.label7.TabIndex = 10;
+            this.label7.Text = "Tekst za poklapanje:";
+            // 
+            // obavestenje
+            // 
+            this.obavestenje.AutoSize = true;
+            this.obavestenje.Location = new System.Drawing.Point(370, 35);
+            this.obavestenje.Name = "obavestenje";
+            this.obavestenje.Size = new System.Drawing.Size(174, 17);
+            this.obavestenje.TabIndex = 9;
+            this.obavestenje.Text = "Obavesti me kad pronađeš text";
+            this.obavestenje.UseVisualStyleBackColor = true;
+            // 
             // Kliker
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(575, 202);
+            this.ClientSize = new System.Drawing.Size(575, 267);
+            this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "Kliker";
-            this.Text = "AutoKliker v.1 by Brian Sandro";
+            this.Text = "AutoKliker by Brian Sandro";
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGrid)).EndInit();
             this.opcijeDesnogKlika.ResumeLayout(false);
+            this.groupBox3.ResumeLayout(false);
+            this.groupBox3.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -322,6 +396,12 @@
         private System.Windows.Forms.ContextMenuStrip opcijeDesnogKlika;
         private System.Windows.Forms.ToolStripMenuItem izbrišiPozicijuToolStripMenuItem;
         private System.Windows.Forms.CheckBox pocetnaPozicija;
+        private System.Windows.Forms.GroupBox groupBox3;
+        private System.Windows.Forms.TextBox txtSendTo;
+        private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.TextBox txtSearchFor;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.CheckBox obavestenje;
     }
 }
 
