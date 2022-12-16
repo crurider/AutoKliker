@@ -254,7 +254,7 @@ namespace AutoKliker
         // Screenshot i cuvanje aktivnog prozora
         private void getScreenshotAndSave() {
             var image = ScreenCapture.CaptureActiveWindow();
-            image.Save(imagePath, System.Drawing.Imaging.ImageFormat.Jpeg);
+            image.Save(imagePath, System.Drawing.Imaging.ImageFormat.Png);
             image.Dispose();
         }
 
