@@ -1,5 +1,7 @@
 # Advanced mouse clicking tool
 
+![Screenshot](Resources/kliker.png)
+
 ## All best features combined in one tool.
 - Clicking on multiple locations
 - Left or right click
