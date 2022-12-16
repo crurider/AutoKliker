@@ -189,18 +189,22 @@ namespace AutoKliker
                     Cursor.Position = new Point(startPositionX, startPositionY);
                 }
 
-                // slikaj prozor
-                getScreenshotAndSave();
+                // ako je obavestenje cekirano
+                if (obavestenje.Checked) {
+                    // slikaj prozor
+                    getScreenshotAndSave();
 
-                // uzmi text
-                string dashboardContent = getTextFromActiveWindow(imagePath);
+                    // uzmi text
+                    string dashboardContent = getTextFromActiveWindow(imagePath);
 
-                // proveri da li postoji tekma
-                // ako postoji stopiraj kliker i posalji notifikaciju
-                if (dashboardContent.ToLower().Contains(txtSearchFor.Text)) {
-                    tokenSource?.Cancel();
-                    var config = getEmailParams();
-                    sendMail(config);
+                    // proveri da li postoji tekma
+                    // ako postoji stopiraj kliker i posalji notifikaciju
+                    if (dashboardContent.ToLower().Contains(txtSearchFor.Text)) {
+                        cnt = 0;
+                        tokenSource?.Cancel();
+                        var config = getEmailParams();
+                        sendMail(config);
+                    }
                 }
 
                 Thread.Sleep(r);
@@ -232,6 +236,7 @@ namespace AutoKliker
                     cnt--;
                 }
                 if (token.IsCancellationRequested) {
+                    btnStart.Enabled = true;
                     throw new TaskCanceledException();
                 }
             }
@@ -281,11 +286,11 @@ namespace AutoKliker
             string body = "The game is found! Please start working immediately!";
 
             try {
-                ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
-                var client = new SmtpClient(host, port);
-                client.Credentials = new NetworkCredential(username, password);
-                client.EnableSsl = true;
-                client.Send(username, sendTo, subject, body);
+                using (var client = new SmtpClient(host, port)) {
+                    client.Credentials = new NetworkCredential(username, password);
+                    client.EnableSsl = true;
+                    client.Send(username, sendTo, subject, body);
+                }
             }
             catch (Exception){
                 System.Windows.MessageBox.Show("Greška kod slanja maila.");
@@ -295,9 +300,11 @@ namespace AutoKliker
         // clear placeholder text when click
         private void txtSearchFor_Click(object sender, EventArgs e) {
             txtSearchFor.Text = "";
+            txtSearchFor.ForeColor = Color.Black;
         }
         private void txtSendTo_Click(object sender, EventArgs e) {
             txtSendTo.Text = "";
+            txtSendTo.ForeColor = Color.Black;
         }
     }
 }

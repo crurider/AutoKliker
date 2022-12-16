@@ -10,4 +10,7 @@
 ## Quick start
 > Just build project and run **.exe** (if you won't to use notification feature)
 
-> To use notification you need ***Tesseract*** (for OCR). Install Tesseract and put to env path (TESSDATA_PREFIX).
+> or download **.exe** from Release
+
+> To use notification you need ***Tesseract*** (for OCR). Install Tesseract and put **tessdata** folder to env path (TESSDATA_PREFIX).
+>> Link for download: https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w64-setup-v5.2.0.20220712.exe
