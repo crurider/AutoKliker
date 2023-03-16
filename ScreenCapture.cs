@@ -30,11 +30,11 @@ namespace AutoKliker {
             var rect = new Rect();
             GetWindowRect(handle, ref rect);
             var bounds = new Rectangle(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
-            try {
-                result = new Bitmap(bounds.Width, bounds.Height);
-            }
-            catch {
+            if (bounds.Width == 0 && bounds.Height == 0) {
                 result = new Bitmap(800, 600);
+            }
+            else {
+                result = new Bitmap(bounds.Width, bounds.Height);
             }
             using (var graphics = Graphics.FromImage(result)) {
                 graphics.CopyFromScreen(new Point(bounds.Left, bounds.Top), Point.Empty, bounds.Size);
