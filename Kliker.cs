@@ -35,7 +35,7 @@ namespace AutoKliker
         public CancellationToken token;
         private static string user = Environment.UserName;
         private string imagePath = $"C:\\Users\\{user}\\AppData\\Local\\capture.jpg";
-        private string tessdataPath = "C:\\Program Files\\Tesseract-OCR\\tessdata";
+        private string tessdataPath = Environment.GetEnvironmentVariable("TESSDATA_PREFIX");
         private string host;
         private int port;
         private string username;
