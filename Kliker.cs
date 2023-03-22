@@ -194,6 +194,8 @@ namespace AutoKliker
                     // slikaj prozor
                     getScreenshotAndSave();
 
+                    Thread.Sleep(2000);
+
                     // uzmi text
                     string dashboardContent = getTextFromActiveWindow(imagePath);
 
