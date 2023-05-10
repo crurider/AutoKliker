@@ -182,6 +182,7 @@ namespace AutoKliker
                 }
                 else {
                     mouse_event(MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP, x, y, 0, 0);
+                    mouse_event(MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP, x, y, 0, 0);
                 }
 
                 // vrati na poziciju pre klika
