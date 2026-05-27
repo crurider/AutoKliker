@@ -23,12 +23,12 @@ namespace AutoKliker {
             return CaptureWindow(GetForegroundWindow());
         }
 
-        // Screenshot celog ekrana
-        public static Bitmap CaptureFullScreen() {
-            var bounds = System.Windows.Forms.Screen.PrimaryScreen.Bounds;
+        // Screenshot celog virtualnog desktopa (svi monitori)
+        public static Bitmap CaptureVirtualScreen() {
+            var bounds = System.Windows.Forms.SystemInformation.VirtualScreen;
             var result = new Bitmap(bounds.Width, bounds.Height);
             using (var graphics = Graphics.FromImage(result)) {
-                graphics.CopyFromScreen(Point.Empty, Point.Empty, bounds.Size);
+                graphics.CopyFromScreen(bounds.Location, Point.Empty, bounds.Size);
             }
             return result;
         }

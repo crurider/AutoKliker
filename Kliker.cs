@@ -200,7 +200,7 @@ namespace AutoKliker
                     Thread.Sleep(2000);
 
                     // uzmi text sa celog ekrana
-                    using (var bmp = ScreenCapture.CaptureFullScreen()) {
+                    using (var bmp = ScreenCapture.CaptureVirtualScreen()) {
                         string dashboardContent = getTextFromActiveWindow(bmp);
 
                         // proveri da li postoji tekma
@@ -260,7 +260,7 @@ namespace AutoKliker
 
         // Screenshot i cuvanje celog ekrana
         private void getScreenshotAndSave() {
-            using (var image = ScreenCapture.CaptureFullScreen()) {
+            using (var image = ScreenCapture.CaptureVirtualScreen()) {
                 image.Save(imagePath, System.Drawing.Imaging.ImageFormat.Png);
             }
         }
