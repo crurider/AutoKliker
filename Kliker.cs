@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,7 +20,6 @@ namespace AutoKliker
     {
         private BackPane backgroundPanel;
         private DataTable dtPositions;
-        private DataRow dataRow;
         private Random random;
         private int klikX;
         private int klikY;
@@ -34,7 +35,7 @@ namespace AutoKliker
         public CancellationTokenSource tokenSource;
         public CancellationToken token;
         private static string user = Environment.UserName;
-        private string imagePath = $"C:\\Users\\{user}\\AppData\\Local\\capture.jpg";
+        private string imagePath = $"C:\\Users\\{user}\\AppData\\Local\\capture.png";
         private string tessdataPath = Environment.GetEnvironmentVariable("TESSDATA_PREFIX");
         private string host;
         private int port;
@@ -99,12 +100,13 @@ namespace AutoKliker
                 dtPositions = new DataTable();
                 createTable(dtPositions);
             }
-            dataRow = dtPositions.NewRow();
-            addRowWithData(dataRow, dtPositions);
+            addRowWithData(dtPositions);
+            dataGrid.DataSource = dtPositions;
         }
 
         // Dodavanje reda u tabelu
-        private void addRowWithData(DataRow dr, DataTable dt) {
+        private void addRowWithData(DataTable dt) {
+            DataRow dr = dtPositions.NewRow();
             dr["X"] = txtPozicijaX.Text;
             dr["Y"] = txtPozicijaY.Text;
             try {
@@ -124,8 +126,8 @@ namespace AutoKliker
                 dr["TIP"] = "L";
             }
             dt.Rows.Add(dr);
-            dataGrid.DataSource = dt;
-            clearFields();
+            //dataGrid.DataSource = dt;
+            //clearFields();
         }
 
         // Prikazi meni kada se klikne desni klik na red
@@ -192,21 +194,23 @@ namespace AutoKliker
 
                 // ako je obavestenje cekirano
                 if (obavestenje.Checked) {
-                    // slikaj prozor
+                    // slikaj ceo ekran
                     getScreenshotAndSave();
 
                     Thread.Sleep(2000);
 
-                    // uzmi text
-                    string dashboardContent = getTextFromActiveWindow(imagePath);
+                    // uzmi text sa celog ekrana
+                    using (var bmp = ScreenCapture.CaptureFullScreen()) {
+                        string dashboardContent = getTextFromActiveWindow(bmp);
 
-                    // proveri da li postoji tekma
-                    // ako postoji stopiraj kliker i posalji notifikaciju
-                    if (dashboardContent.ToLower().Contains(txtSearchFor.Text)) {
-                        cnt = 0;
-                        tokenSource?.Cancel();
-                        var config = getEmailParams();
-                        sendMail(config);
+                        // proveri da li postoji tekma
+                        // ako postoji stopiraj kliker i posalji notifikaciju
+                        if (dashboardContent.ToLower().Contains(txtSearchFor.Text)) {
+                            cnt = 0;
+                            tokenSource?.Cancel();
+                            var config = getEmailParams();
+                            sendMail(config);
+                        }
                     }
                 }
 
@@ -254,20 +258,79 @@ namespace AutoKliker
             Cursor.Current = Cursors.Arrow;
         }
 
-        // Screenshot i cuvanje aktivnog prozora
+        // Screenshot i cuvanje celog ekrana
         private void getScreenshotAndSave() {
-            var image = ScreenCapture.CaptureActiveWindow();
-            image.Save(imagePath, System.Drawing.Imaging.ImageFormat.Png);
-            image.Dispose();
+            using (var image = ScreenCapture.CaptureFullScreen()) {
+                image.Save(imagePath, System.Drawing.Imaging.ImageFormat.Png);
+            }
         }
 
         // OCR
-        private string getTextFromActiveWindow(string imagePath) {
-            var ocr = new TesseractEngine(tessdataPath, "eng", EngineMode.Default);
-            var imgToScan = Pix.LoadFromFile(imagePath);
-            var page = ocr.Process(imgToScan);
-            var text = page.GetText();
-            return text;
+        private string getTextFromActiveWindow(Bitmap image) {
+            try {
+                if (string.IsNullOrEmpty(tessdataPath)) {
+                    System.Windows.MessageBox.Show("TESSDATA_PREFIX nije postavljen. Proveri Tesseract instalaciju.");
+                    return string.Empty;
+                }
+                if (image == null) {
+                    LogOcr("Slika je null");
+                    return string.Empty;
+                }
+
+                using (var processed = PreprocessForOcr(image)) {
+                    using (var ocr = new TesseractEngine(tessdataPath, "eng", EngineMode.Default)) {
+                        using (var imgToScan = PixConverter.ToPix(processed)) {
+                            using (var page = ocr.Process(imgToScan)) {
+                                var text = page.GetText();
+                                var confidence = page.GetMeanConfidence();
+                                LogOcr($"Confidence: {confidence:P2} | Dužina: {text.Length} | Tekst: {text.Substring(0, Math.Min(200, text.Length)).Replace(Environment.NewLine, " ")}");
+                                return text;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex) {
+                LogOcr("GREŠKA: " + ex.Message);
+                System.Windows.MessageBox.Show("OCR greška: " + ex.Message);
+                return string.Empty;
+            }
+        }
+
+        private Bitmap PreprocessForOcr(Bitmap original) {
+            // Uvećaj sliku 2x — Tesseract bolje prepoznaje veći tekst
+            var scaled = new Bitmap(original.Width * 2, original.Height * 2);
+            using (var g = Graphics.FromImage(scaled)) {
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.DrawImage(original, 0, 0, scaled.Width, scaled.Height);
+            }
+
+            // Konvertuj u grayscale (crno-belo)
+            var gray = new Bitmap(scaled.Width, scaled.Height);
+            using (var g = Graphics.FromImage(gray)) {
+                var matrix = new ColorMatrix(
+                    new float[][] {
+                        new float[] {0.299f, 0.299f, 0.299f, 0, 0},
+                        new float[] {0.587f, 0.587f, 0.587f, 0, 0},
+                        new float[] {0.114f, 0.114f, 0.114f, 0, 0},
+                        new float[] {0,      0,      0,      1, 0},
+                        new float[] {0,      0,      0,      0, 1}
+                    });
+                var attrs = new ImageAttributes();
+                attrs.SetColorMatrix(matrix);
+                g.DrawImage(scaled, new Rectangle(0, 0, gray.Width, gray.Height), 0, 0, scaled.Width, scaled.Height, GraphicsUnit.Pixel, attrs);
+            }
+            scaled.Dispose();
+            return gray;
+        }
+
+        private void LogOcr(string message) {
+            try {
+                string logPath = $"C:\\Users\\{user}\\AppData\\Local\\ocr_log.txt";
+                string line = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}{Environment.NewLine}";
+                File.AppendAllText(logPath, line);
+            }
+            catch { }
         }
 
         // Importovanje parametara za mail
@@ -284,19 +347,23 @@ namespace AutoKliker
             port = Convert.ToInt32(config["SMTP:port"]);
             username = config["SMTP:username"];
             password = config["SMTP:password"];
+            string from = config["SMTP:from"];
             string sendTo = txtSendTo.Text;
             string subject = "The game is found in dashboard!";
             string body = "The game is found! Please start working immediately!";
 
             try {
                 using (var client = new SmtpClient(host, port)) {
+                    client.UseDefaultCredentials = false;
+                    client.DeliveryMethod = SmtpDeliveryMethod.Network;
                     client.Credentials = new NetworkCredential(username, password);
                     client.EnableSsl = true;
-                    client.Send(username, sendTo, subject, body);
+                    client.Send(from, sendTo, subject, body);
                 }
             }
-            catch (Exception){
-                System.Windows.MessageBox.Show("Greška kod slanja maila.");
+            catch (Exception ex) {
+                LogOcr("MAIL GREŠKA: " + ex.Message);
+                System.Windows.MessageBox.Show("Greška kod slanja maila:\n\n" + ex.Message);
             }
         }
 
